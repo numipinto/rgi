@@ -1,10 +1,20 @@
 package pt.tecnico.rgi;
 
-import com.sun.deploy.util.ArrayUtil;
-
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class Doc2Vector {
 
@@ -101,7 +111,54 @@ public class Doc2Vector {
     private void storeDoc(Map<Integer, Integer> doc) {
         documents.add(doc);
     }
-
+    
+    private int docWTerm;
+    private int docTotal;
+    
+    private int tf(String term, BufferedReader fileReader) throws IOException {
+    	String line;
+    	int retValue = 0;    	
+    	while ((line = fileReader.readLine()) != null) {
+    		String[] words = line.split(" ");
+            List<String> wordsList = Arrays.asList(words);
+            for (String word : wordsList) {
+                word.replaceAll("\n\t\r.,:;?!<>«»()/#$%&=\"´`", "");
+                if(word.matches(term)){
+                    retValue = 1;
+                }
+            }
+        }
+    	return retValue;
+    }
+    
+    private double idf(String term,Path documents) throws IOException {
+    	docWTerm = 0;
+    	docTotal = 0;
+    	Files.walk(Paths.get(documents.toString())).forEach(filePath -> {
+    		docTotal+=1;
+    		if (Files.isRegularFile(filePath)) {
+    	    	BufferedReader br;
+				try {
+					
+					br = Files.newBufferedReader(filePath);
+					docWTerm += tf(term,br); //vamos ver o nmr de docs onde ocorre o termo
+    	          
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    	    }
+    	});
+    	return Math.log(docTotal/docWTerm);
+    }
+    
+    private double tf_idf(String term,Path doc, Path documents) throws IOException {
+    	BufferedReader br  = Files.newBufferedReader(doc);
+    	int termFrequency = tf(term,br);
+    	double inverseDocumentFrequency = idf(term,documents);
+    	return  termFrequency * inverseDocumentFrequency ;
+    } 
+    
     private void parseDoc(Path file) throws IOException {
         BufferedReader br = Files.newBufferedReader(file);
         final Map<Integer, Integer> docTerms = new HashMap<Integer, Integer>();
@@ -125,6 +182,7 @@ public class Doc2Vector {
         br.close();
         storeDoc(docTerms);
     }
+
 
     // java Doc2Vector -Dinput TF|IDF|TF-IDF D:\\ignore.set D:\\feature.set D:\\docs
     public static void main(String[] args) {
