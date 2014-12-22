@@ -174,7 +174,7 @@ public class Doc2Vector {
         return classPath;
     }
     
-    private void parseDoc(Path file) throws IOException {
+    private void parseDoc(Path file, int classe) throws IOException {
         BufferedReader br = Files.newBufferedReader(file);
         final Map<Integer, Integer> docTerms = new HashMap<Integer, Integer>();
         // animal 5
@@ -215,7 +215,7 @@ public class Doc2Vector {
                 List<File> list = Arrays.asList(files);
                 list.forEach(file -> {
                     try {
-                        doc2Vector.parseDoc(file.toPath());
+                        doc2Vector.parseDoc(file.toPath(), k);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
