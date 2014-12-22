@@ -22,12 +22,12 @@ public class Doc2Vector {
 
     private Map<String, Integer> features;
     private Map<String, Integer> ignoreSet;
-    private List<Map<Integer, Integer>> documents;
+    private List<Document> documents;
 
     public Doc2Vector() {
-        this.features = new HashMap<>();
-        this.ignoreSet = new HashMap<>();
-        this.documents = new ArrayList<>();
+        this.features = new HashMap();
+        this.ignoreSet = new HashMap();
+        this.documents = new ArrayList();
     }
 
     private void readFeatureList(String fileName) throws IOException {
@@ -99,16 +99,7 @@ public class Doc2Vector {
         return feature;
     }
 
-    /*
-    * Add a feature to a document
-    * */
-    private void addDocFeature(Map<Integer, Integer> docTerms, int feature) {
-        if (docTerms.containsKey(feature)) {
-            docTerms.put(feature, docTerms.get(feature) + 1);
-        } else docTerms.put(feature, 1);
-    }
-
-    private void storeDoc(Map<Integer, Integer> doc) {
+    private void storeDoc(Document doc) {
         documents.add(doc);
     }
     
@@ -176,7 +167,7 @@ public class Doc2Vector {
     
     private void parseDoc(Path file, int classe) throws IOException {
         BufferedReader br = Files.newBufferedReader(file);
-        final Map<Integer, Integer> docTerms = new HashMap<Integer, Integer>();
+        final Document doc = new Document(classe);
         // animal 5
         String line;
         while ((line = br.readLine()) != null) {
@@ -188,45 +179,187 @@ public class Doc2Vector {
                 if(word.matches("[a-zA-Z]+-?[a-zA-Z]+")){
                     if(!isIgnore(word)) {
                         feature = getFeature(word);
-                        addDocFeature(docTerms, feature);
+                        doc.addFeature(feature);
                     }
                 }
                 else System.out.println("ERROR parsing word: " + word);
             });
         }
         br.close();
-        storeDoc(docTerms);
+        doc.calculateTF();
+        storeDoc(doc);
+    }
+
+    private void outputTF(String fileName) {
+        Path path = Paths.get(fileName);
+        try {
+            BufferedWriter bw = Files.newBufferedWriter(path,
+                    StandardOpenOption.CREATE_NEW,
+                    StandardOpenOption.APPEND,
+                    StandardOpenOption.WRITE);
+
+            documents.forEach(doc -> {
+                try {
+                    bw.append(String.format("%d ", doc.getClassType()));
+                    doc.getFeaturesTF().forEach((k,v)->{
+                        try {
+                            bw.append(String.format("%d:%f ", k, v));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    bw.append("\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void outputIDF(String fileName) {
+        Path path = Paths.get(fileName);
+        try {
+            BufferedWriter bw = Files.newBufferedWriter(path,
+                    StandardOpenOption.CREATE_NEW,
+                    StandardOpenOption.APPEND,
+                    StandardOpenOption.WRITE);
+
+            documents.forEach(doc -> {
+                try {
+                    bw.append(String.format("%d ", doc.getClassType()));
+                    doc.getFeaturesIDF().forEach((k,v)->{
+                        try {
+                            bw.append(String.format("%d:%f ", k, v));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    bw.append("\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void outputTFIDF(String fileName) {
+        Path path = Paths.get(fileName);
+        try {
+            BufferedWriter bw = Files.newBufferedWriter(path,
+                    StandardOpenOption.CREATE_NEW,
+                    StandardOpenOption.APPEND,
+                    StandardOpenOption.WRITE);
+
+            documents.forEach(doc -> {
+                try {
+                    bw.append(String.format("%d ", doc.getClassType()));
+                    doc.getFeaturesTFIDF().forEach((k,v)->{
+                        try {
+                            bw.append(String.format("%d:%f ", k, v));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    bw.append("\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
     // java Doc2Vector -Dinput TF|IDF|TF-IDF D:\\ignore.set D:\\feature.set D:\\docs\trainclasses.set
     public static void main(String[] args) {
         Doc2Vector doc2Vector = new Doc2Vector();
+        String statistic = null, ignorePath = null, featurePath = null, docPath = null, output = null;
 
         try {
-            doc2Vector.readIgnoredWords(args[0]);
-            doc2Vector.readFeatureList(args[1]);
+            for(int i=0; i < args.length; i+=2) {
 
-            //Parse Documents
-            Map<Integer, String> paths = doc2Vector.readClassDirectory(args[2]);
-            paths.forEach((k,v) -> {
-                Path path = Paths.get(v);
-                File[] files = path.toFile().listFiles();
-                List<File> list = Arrays.asList(files);
-                list.forEach(file -> {
-                    try {
-                        doc2Vector.parseDoc(file.toPath(), k);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                switch(args[i]) {
+                    case "-s":
+                        statistic = args[i+1];
+                        break;
+                    case "-i":
+                        ignorePath = args[i+1];
+                        break;
+                    case "-f":
+                        featurePath = args[i+1];
+                        break;
+                    case "-d":
+                        docPath = args[i+1];
+                        break;
+                    case "-o":
+                        output = args[i+1];
+                        break;
+                    case "-h":
+                        System.out.println("This help text!");
+                        return;
+
+                }
+            }
+
+            if(ignorePath != null)
+                doc2Vector.readIgnoredWords(ignorePath);
+            if(featurePath!=null)
+                doc2Vector.readFeatureList(featurePath);
+
+            if(docPath != null) {
+                //Parse Documents
+                Map<Integer, String> paths = doc2Vector.readClassDirectory(docPath);
+                paths.forEach((k, v) -> {
+                    Path path = Paths.get(v);
+                    File[] files = path.toFile().listFiles();
+                    List<File> list = Arrays.asList(files);
+                    list.forEach(file -> {
+                        try {
+                            doc2Vector.parseDoc(file.toPath(), k);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
                 });
-            });
 
-            doc2Vector.writeFeatureList(args[1]);
+                switch (statistic) {
+                    case "TF":
+                        //Output TF -> já calculado
+                        doc2Vector.outputTF(output);
+                        break;
+                    case "IDF":
+                        doc2Vector.documents.forEach(doc -> {
+                            doc.calculateIDF(doc2Vector.documents);
+                        });
+                        //Output
+                        doc2Vector.outputIDF(output);
+                        break;
+                    case "TFIDF":
+                        doc2Vector.documents.forEach(doc -> {
+                            doc.calculateIDF(doc2Vector.documents);
+                        });
+                        doc2Vector.documents.forEach(doc -> {
+                            doc.calculateTFIDF();
+                        });
+                        //Output
+                        doc2Vector.outputTFIDF(output);
+                        break;
+                }
+            }
+            else {
+                System.out.println("ERROR: NO DOCS FILE.");
+                return;
+            }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            doc2Vector.writeFeatureList(featurePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
     }
 }
 
