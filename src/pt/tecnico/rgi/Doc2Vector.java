@@ -157,7 +157,22 @@ public class Doc2Vector {
     	int termFrequency = tf(term,br);
     	double inverseDocumentFrequency = idf(term,documents);
     	return  termFrequency * inverseDocumentFrequency ;
-    } 
+    }
+
+    private Map<Integer, String> readClassDirectory(String fileName) throws IOException {
+        Path path = Paths.get(fileName);
+        BufferedReader br = Files.newBufferedReader(path);
+        Map<Integer, String> classPath = new HashMap();
+        String line;
+
+        while((line = br.readLine()) != null) {
+            String[] splitLine = line.split(" ");
+            classPath.put(Integer.parseInt(splitLine[0]), splitLine[1]);
+        }
+
+        br.close();
+        return classPath;
+    }
     
     private void parseDoc(Path file) throws IOException {
         BufferedReader br = Files.newBufferedReader(file);
@@ -184,7 +199,7 @@ public class Doc2Vector {
     }
 
 
-    // java Doc2Vector -Dinput TF|IDF|TF-IDF D:\\ignore.set D:\\feature.set D:\\docs
+    // java Doc2Vector -Dinput TF|IDF|TF-IDF D:\\ignore.set D:\\feature.set D:\\docs\trainclasses.set
     public static void main(String[] args) {
         Doc2Vector doc2Vector = new Doc2Vector();
 
@@ -193,15 +208,18 @@ public class Doc2Vector {
             doc2Vector.readFeatureList(args[1]);
 
             //Parse Documents
-            Path path = Paths.get(args[2]);
-            File[] files = path.toFile().listFiles();
-            List<File> list = Arrays.asList(files);
-            list.forEach(file -> {
-                try {
-                    doc2Vector.parseDoc(file.toPath());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            Map<Integer, String> paths = doc2Vector.readClassDirectory(args[2]);
+            paths.forEach((k,v) -> {
+                Path path = Paths.get(v);
+                File[] files = path.toFile().listFiles();
+                List<File> list = Arrays.asList(files);
+                list.forEach(file -> {
+                    try {
+                        doc2Vector.parseDoc(file.toPath());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
             });
 
             doc2Vector.writeFeatureList(args[1]);
