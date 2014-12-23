@@ -9,12 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Doc2Vector {
 
@@ -175,7 +170,7 @@ public class Doc2Vector {
             List<String> wordsList = Arrays.asList(words);
             wordsList.forEach(word -> {
                 int feature;
-                word.replaceAll("\n\t\r.,:;?!<>«»()/#$%&=\"´`", "");
+                word = word.replaceAll("\"|\\.|!|#|\\$|%|&|/|\\(|\\)|=|\\?|»|«|<|>|,|;|:|ª|º|\\*|\\+|´|`|\\{|\\}|\\[|\\]", "");
                 if(word.matches("[a-zA-Z]+-?[a-zA-Z]+")){
                     if(!isIgnore(word)) {
                         feature = getFeature(word);
@@ -200,15 +195,16 @@ public class Doc2Vector {
 
             documents.forEach(doc -> {
                 try {
-                    bw.append(String.format("%d ", doc.getClassType()));
-                    doc.getFeaturesTF().forEach((k,v)->{
-                        try {
-                            bw.append(String.format("%d:%f ", k, v));
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                    SortedSet<Integer> sortedSet = new TreeSet(doc.getFeaturesTF().keySet());
+                    if(sortedSet.size() > 0) {
+                        bw.append(String.format("%d ", doc.getClassType()));
+
+                        for (Integer key : sortedSet) {
+                            bw.append(String.format("%d:%f ", key, doc.getFeaturesTF().get(key)));
                         }
-                    });
-                    bw.append("\n");
+
+                        bw.append("\n");
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -228,15 +224,16 @@ public class Doc2Vector {
 
             documents.forEach(doc -> {
                 try {
-                    bw.append(String.format("%d ", doc.getClassType()));
-                    doc.getFeaturesIDF().forEach((k,v)->{
-                        try {
-                            bw.append(String.format("%d:%f ", k, v));
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                    SortedSet<Integer> sortedSet = new TreeSet(doc.getFeaturesIDF().keySet());
+                    if(sortedSet.size() > 0) {
+                        bw.append(String.format("%d ", doc.getClassType()));
+
+                        for (Integer key : sortedSet) {
+                            bw.append(String.format("%d:%f ", key, doc.getFeaturesIDF().get(key)));
                         }
-                    });
-                    bw.append("\n");
+
+                        bw.append("\n");
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -256,15 +253,16 @@ public class Doc2Vector {
 
             documents.forEach(doc -> {
                 try {
-                    bw.append(String.format("%d ", doc.getClassType()));
-                    doc.getFeaturesTFIDF().forEach((k,v)->{
-                        try {
-                            bw.append(String.format("%d:%f ", k, v));
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                    SortedSet<Integer> sortedSet = new TreeSet(doc.getFeaturesTFIDF().keySet());
+                    if(sortedSet.size() > 0) {
+                        bw.append(String.format("%d ", doc.getClassType()));
+
+                        for (Integer key : sortedSet) {
+                            bw.append(String.format("%d:%f ", key, doc.getFeaturesTFIDF().get(key)));
                         }
-                    });
-                    bw.append("\n");
+
+                        bw.append("\n");
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
