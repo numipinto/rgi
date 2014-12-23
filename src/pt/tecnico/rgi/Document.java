@@ -78,22 +78,22 @@ public class Document {
     }
 
     public void calculateIDF(List<Document> docs) {
-        features.forEach((k,v)->{
+    	for (Map.Entry<Integer, Integer> entry : features.entrySet()) {
             Double idf = null;
             int count = 0;
             for(Document doc : docs) {
-                if ((idf = doc.getFeatureIDF(k)) != null)
+                if ((idf = doc.getFeatureIDF(entry.getKey())) != null)
                     break;
-                else if(doc.getFeatureTF(k) != 0)
+                else if(doc.getFeatureTF(entry.getKey()) != null && (doc.getFeatureTF(entry.getKey()) != 0 )  )
                     count++;
             }
             if(idf != null) {
-                addIDFFeature(k, idf);
+                addIDFFeature(entry.getKey(), idf);
             }
             else {
-                addIDFFeature(k, Math.log(docs.size()/count));
+                addIDFFeature(entry.getKey(), Math.log(docs.size()/count));
             }
-        });
+        };
     }
 
     public void calculateTFIDF() {

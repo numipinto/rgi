@@ -314,18 +314,20 @@ public class Doc2Vector {
             if(docPath != null) {
                 //Parse Documents
                 Map<Integer, String> paths = doc2Vector.readClassDirectory(docPath);
-                paths.forEach((k, v) -> {
-                    Path path = Paths.get(v);
-                    File[] files = path.toFile().listFiles();
+                for (Map.Entry<Integer, String> entry : paths.entrySet()){
+                	
+                    Path path = Paths.get(entry.getValue());
+                    File dir = new File(entry.getValue());// + entry.getValue() );
+                    File[] files = dir.listFiles();
                     List<File> list = Arrays.asList(files);
                     list.forEach(file -> {
                         try {
-                            doc2Vector.parseDoc(file.toPath(), k);
+                            doc2Vector.parseDoc(file.toPath(), entry.getKey());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     });
-                });
+                };
 
                 switch (statistic) {
                     case "TF":
@@ -333,19 +335,19 @@ public class Doc2Vector {
                         doc2Vector.outputTF(output);
                         break;
                     case "IDF":
-                        doc2Vector.documents.forEach(doc -> {
+                    	for (Document doc : doc2Vector.documents) {
                             doc.calculateIDF(doc2Vector.documents);
-                        });
+                        };
                         //Output
                         doc2Vector.outputIDF(output);
                         break;
                     case "TFIDF":
-                        doc2Vector.documents.forEach(doc -> {
+                    	for (Document doc : doc2Vector.documents) {
                             doc.calculateIDF(doc2Vector.documents);
-                        });
-                        doc2Vector.documents.forEach(doc -> {
+                        };
+                        for (Document doc : doc2Vector.documents) {
                             doc.calculateTFIDF();
-                        });
+                        };
                         //Output
                         doc2Vector.outputTFIDF(output);
                         break;
