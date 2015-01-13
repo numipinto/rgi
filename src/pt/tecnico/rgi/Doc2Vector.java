@@ -18,11 +18,13 @@ public class Doc2Vector {
     private Map<String, Integer> features;
     private Map<String, Integer> ignoreSet;
     private List<Document> documents;
+    private Map<Integer, Integer> featureInDocument;
 
     public Doc2Vector() {
         this.features = new HashMap();
         this.ignoreSet = new HashMap();
         this.documents = new ArrayList();
+        this.featureInDocument = new HashMap();
     }
 
     private void readFeatureList(String fileName) throws IOException {
@@ -162,6 +164,7 @@ public class Doc2Vector {
     
     private void parseDoc(Path file, int classe) throws IOException {
         BufferedReader br = Files.newBufferedReader(file);
+        Map<Integer, Integer> feats = new HashMap();
         final Document doc = new Document(classe);
         // animal 5
         String line;
@@ -171,15 +174,26 @@ public class Doc2Vector {
             wordsList.forEach(word -> {
                 int feature;
                 word = word.replaceAll("\"|\\.|!|#|\\$|%|&|/|\\(|\\)|=|\\?|»|«|<|>|,|;|:|ª|º|\\*|\\+|´|`|\\{|\\}|\\[|\\]", "");
-                if(word.matches("[a-zA-Z]+-?[a-zA-Z]+")){
+                word = word.toLowerCase();
+                if(word.matches("[a-z]+-?[a-z]+")){
                     if(!isIgnore(word)) {
                         feature = getFeature(word);
                         doc.addFeature(feature);
+                        feats.put(feature, 1);
                     }
                 }
                 else System.out.println("ERROR parsing word: " + word);
             });
         }
+
+        feats.forEach((k, v) -> {
+            int docs = 1;
+            if (featureInDocument.containsKey(k)) {
+                docs = featureInDocument.get(k) + 1;
+            }
+            featureInDocument.put(k, docs);
+        });
+
         br.close();
         doc.calculateTF();
         storeDoc(doc);
@@ -315,7 +329,7 @@ public class Doc2Vector {
                 for (Map.Entry<Integer, String> entry : paths.entrySet()){
                 	
                     Path path = Paths.get(entry.getValue());
-                    File dir = new File(entry.getValue());// + entry.getValue() );
+                    File dir = new File(entry.getValue());// + entry.getValue() )
                     File[] files = dir.listFiles();
                     List<File> list = Arrays.asList(files);
                     list.forEach(file -> {
@@ -334,21 +348,29 @@ public class Doc2Vector {
                         break;
                     case "IDF":
                     	for (Document doc : doc2Vector.documents) {
-                            doc.calculateIDF(doc2Vector.documents);
+                            doc.calculateIDF(doc2Vector.documents.size(), doc2Vector.featureInDocument);
                         };
                         //Output
                         doc2Vector.outputIDF(output);
                         break;
                     case "TFIDF":
                     	for (Document doc : doc2Vector.documents) {
-                            doc.calculateIDF(doc2Vector.documents);
-                        };
-                        for (Document doc : doc2Vector.documents) {
+                            doc.calculateIDF(doc2Vector.documents.size(), doc2Vector.featureInDocument);
                             doc.calculateTFIDF();
                         };
                         //Output
                         doc2Vector.outputTFIDF(output);
                         break;
+                    case "ALL":
+                        for (Document doc : doc2Vector.documents) {
+                            doc.calculateIDF(doc2Vector.documents.size(), doc2Vector.featureInDocument);
+                            doc.calculateTFIDF();
+                        };
+                        doc2Vector.outputTF(output + "tf.txt");
+                        doc2Vector.outputIDF(output + "idf.txt");
+                        doc2Vector.outputTFIDF(output + "tfidf.txt");
+                        break;
+
                 }
             }
             else {

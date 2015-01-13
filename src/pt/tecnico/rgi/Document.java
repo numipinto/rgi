@@ -77,23 +77,24 @@ public class Document {
         });
     }
 
-    public void calculateIDF(List<Document> docs) {
+    public void calculateIDF(Integer N, Map<Integer, Integer> docsInFeat) {
     	for (Map.Entry<Integer, Integer> entry : features.entrySet()) {
-            Double idf = null;
-            int count = 0;
-            for(Document doc : docs) {
+            //Double idf = null;
+            int count = docsInFeat.get(entry.getKey());
+            addIDFFeature(entry.getKey(), Math.log(N/count));
+            /*for(Document doc : docs) {
                 if ((idf = doc.getFeatureIDF(entry.getKey())) != null)
                     break;
                 else if(doc.getFeatureTF(entry.getKey()) != null && (doc.getFeatureTF(entry.getKey()) != 0 )  )
                     count++;
-            }
-            if(idf != null) {
+            }*/
+            /*if(idf != null) {
                 addIDFFeature(entry.getKey(), idf);
             }
             else {
                 addIDFFeature(entry.getKey(), Math.log(docs.size()/count));
-            }
-        };
+            }*/
+        }
     }
 
     public void calculateTFIDF() {
