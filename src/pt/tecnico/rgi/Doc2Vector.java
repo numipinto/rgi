@@ -214,9 +214,8 @@ public class Doc2Vector {
                         bw.append(String.format("%d ", doc.getClassType()));
 
                         for (Integer key : sortedSet) {
-                            bw.append(String.format("%d:%f ", key, doc.getFeaturesTF().get(key)));
+                            bw.append(String.format(Locale.US, "%d:%f ", key, doc.getFeaturesTF().get(key)));
                         }
-
                         bw.append("\n");
                     }
                 } catch (IOException e) {
@@ -243,7 +242,7 @@ public class Doc2Vector {
                         bw.append(String.format("%d ", doc.getClassType()));
 
                         for (Integer key : sortedSet) {
-                            bw.append(String.format("%d:%f ", key, doc.getFeaturesIDF().get(key)));
+                            bw.append(String.format(Locale.US, "%d:%f ", key, doc.getFeaturesIDF().get(key)));
                         }
 
                         bw.append("\n");
@@ -272,7 +271,7 @@ public class Doc2Vector {
                         bw.append(String.format("%d ", doc.getClassType()));
 
                         for (Integer key : sortedSet) {
-                            bw.append(String.format("%d:%f ", key, doc.getFeaturesTFIDF().get(key)));
+                            bw.append(String.format(Locale.US, "%d:%f ", key, doc.getFeaturesTFIDF().get(key)));
                         }
 
                         bw.append("\n");
